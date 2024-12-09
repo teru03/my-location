@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>位置情報と地図表示</title>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet"></script>
+  <style>
+    body {
+      display: flex;
+      height: 100vh;
+      margin: 0;
+    }
+    #map {
+      flex: 2;
+      height: 100%;
+    }
+    #info {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      border-left: 1px solid #ccc;
+    }
+    #info ul {
+      list-style: none;
+      padding: 0;
+    }
+    #info ul li {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="info">
+    <h2>位置情報リスト</h2>
+    <ul id="position-list"></ul>
+  </div>
+
+  <script>
+    // 地図初期化
+    const map = L.map('map').setView([35.6895, 139.6917], 13); // 初期位置: 東京
+    const markerGroup = L.layerGroup().addTo(map);
+
+    // 国土地理院のタイルを設定
+    L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
+      attribution: '地図データ: <a href="https://www.gsi.go.jp/">国土地理院</a>',
+      maxZoom: 18
+    }).addTo(map);
+
+    // 保存した位置情報
+    const positionData = [];
+
+    // 位置情報リストの更新
+    const updatePositionList = () => {
+      const list = document.getElementById('position-list');
+      list.innerHTML = '';
+      positionData.forEach((data) => {
+        const li = document.createElement('li');
+        li.textContent = `${data.timestamp}: ${data.lat.toFixed(6)}, ${data.lng.toFixed(6)}`;
+        list.appendChild(li);
+      });
+    };
+
+    // マーカーの更新
+    const updateMarkers = () => {
+      markerGroup.clearLayers();
+      positionData.forEach((data) => {
+        const marker = L.marker([data.lat, data.lng]).addTo(markerGroup);
+        marker.bindTooltip(data.timestamp).openTooltip();
+      });
+    };
+
+    // 現在位置の取得
+    const fetchPosition = () => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const timestamp = new Date().toLocaleString();
+          positionData.push({ lat: latitude, lng: longitude, timestamp });
+
+          // 100件まで保存
+          if (positionData.length > 100) {
+            positionData.shift();
+          }
+
+          updatePositionList();
+          updateMarkers();
+        },
+        (error) => {
+          console.error('位置情報の取得に失敗しました:', error);
+        }
+      );
+    };
+
+    // 15秒ごとに位置情報を取得
+    setInterval(fetchPosition, 15000);
+
+    // 初期取得
+    fetchPosition();
+  </script>
+</body>
+</html>
