@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>現在位置表示 - 国土地理院地図</title>
+    <style>
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        // 地図の初期設定
+        const map = L.map('map').setView([35.681236, 139.767125], 15); // 東京駅を中心に初期表示
+
+        // 国土地理院の標準地図タイルを設定
+        L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '&copy; <a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a>'
+        }).addTo(map);
+
+        // 現在位置を取得して地図に表示する関数
+        function showCurrentPosition() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    // 現在位置にマーカーを設置
+                    L.marker([lat, lng]).addTo(map)
+                        .bindPopup('現在位置').openPopup();
+                    
+                    // 現在位置に地図の中心を移動
+                    map.setView([lat, lng], 15);
+                }, function(error) {
+                    alert('位置情報の取得に失敗しました: ' + error.message);
+                });
+            } else {
+                alert('お使いのブラウザは位置情報に対応していません');
+            }
+        }
+
+        // ページ読み込み時に現在位置を表示
+        showCurrentPosition();
+    </script>
+</body>
+</html>
